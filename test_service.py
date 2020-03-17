@@ -3,9 +3,12 @@ import json
 import socket
 import argparse
 
+JSONDecodeError = json.decoder.JSONDecodeError
+
 
 def check_service(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(3)
         return s.connect_ex((host, port)) == 0
 
 
@@ -18,8 +21,13 @@ def main():
     args = parser.parse_args()
 
     config_file = args.config_file
-    with open(config_file, 'r') as cf:
-        config = json.load(cf)
+
+    try:
+        with open(config_file, 'r') as cf:
+            config = json.load(cf)
+    except (IOError, JSONDecodeError):
+        print('config_file is corrupt')
+        return
 
     host = args.host
     for service in config['service_list']:
